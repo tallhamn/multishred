@@ -40,14 +40,14 @@ impl ThreadPool{
 }
 
 
-pub struct  Worker{
+struct  Worker{
     id: usize,
     thread: thread::JoinHandle<()>,
 }
 
 impl Worker{
 
-    pub fn new (id: usize) -> Worker{
+    fn new (id: usize) -> Worker{
         let thread = thread::spawn(|| {});
 
         Worker { id, thread }
