@@ -1,2 +1,2 @@
 # multishred
-just learning rust
+learning rust. multithreaded webserver.
