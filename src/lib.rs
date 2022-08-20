@@ -3,6 +3,11 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 
 
+enum Message {
+    NewJob(Job),
+    Terminate,
+}
+
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -40,8 +45,8 @@ impl ThreadPool{
     }
 
     pub fn execute<F>(&self, f:F)
-        where
-            F: FnOnce() + Send + 'static
+    where
+        F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
 
@@ -74,14 +79,25 @@ struct  Worker{
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
-        let thread = thread::spawn(move || {
-            while let Ok(job) = receiver.lock().unwrap().recv() {
-                println!("Worker {id} got a job; executing.");
+        let thread = thread::spawn(move || loop {
+            let message = receiver.lock().unwrap().recv();
 
-                job();
+            match message {
+                Ok(job) => {
+                    println!("Worker {id} got a job; executing.");
+
+                    job();
+                }
+                Err(_) => {
+                    println!("Worker {id} disconnected; shutting down.");
+                    break;
+                }
             }
         });
 
-        Worker { id, thread: Some(thread) }
+        Worker {
+            id,
+            thread: Some(thread),
+        }
     }
 }
